@@ -1,13 +1,14 @@
 package autoffmpeg
 
 import (
-	"autoffmpeg/utils"
 	"context"
 	"errors"
 	"io"
 	"os/exec"
 	"strings"
 	"time"
+
+	"github.com/b4158813/autoffmpeg/utils"
 )
 
 type ffmpegCmdMethods interface {
