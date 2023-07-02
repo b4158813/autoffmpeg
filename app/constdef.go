@@ -1,4 +1,4 @@
-package utils
+package autoffmpeg
 
 const (
 	// 空格分隔符

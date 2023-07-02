@@ -1,3 +1,3 @@
-module github.com/b4158813/autoffmpeg
+module autoffmpeg
 
 go 1.20

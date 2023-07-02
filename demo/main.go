@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"os/exec"
 	"strings"
-
-	autoffmpeg "github.com/b4158813/autoffmpeg/app"
 )
 
 func main() {
