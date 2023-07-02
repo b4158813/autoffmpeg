@@ -1,6 +1,7 @@
 package main
 
 import (
+	autoffmpeg "autoffmpeg/app"
 	"context"
 	"fmt"
 	"os/exec"
