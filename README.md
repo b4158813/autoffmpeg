@@ -24,12 +24,9 @@
 
     // 测试：获取首屏、编码器、档位等信息
 	go func() {
-		need := true
-		for {
-			if need && autocmd.IsInitAllDone() {
-				fmt.Printf("%+v\n", autocmd.GetAllTransInfo())
-				need = false
-			}
+		select {
+		case <-autocmd.InitAllDoneSig():
+			fmt.Printf("%+v\n", autocmd.GetAllTransInfo())
 		}
 	}()
 
