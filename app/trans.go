@@ -1,7 +1,5 @@
 package autoffmpeg
 
-import "github.com/b4158813/autoffmpeg/utils"
-
 type TranscodeInfo struct {
 	PullMode  string
 	PushMode  string
@@ -12,7 +10,7 @@ type TranscodeInfo struct {
 }
 
 func NewTranscodeInfo() *TranscodeInfo {
-	return transInfo(utils.ModeDefault, utils.ModeDefault, utils.CodecDefault, utils.CodecDefault, 0, 0)
+	return transInfo(ModeDefault, ModeDefault, CodecDefault, CodecDefault, 0, 0)
 }
 
 func transInfo(pullMode, pushMode, pullCodec, pushCodec string, pullRt, pushRt int64) *TranscodeInfo {

@@ -1,12 +1,11 @@
 package main
 
 import (
+	autoffmpeg "autoffmpeg/app"
 	"context"
 	"fmt"
 	"os/exec"
 	"strings"
-
-	autoffmpeg "github.com/b4158813/autoffmpeg/app"
 )
 
 func main() {

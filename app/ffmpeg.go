@@ -7,8 +7,6 @@ import (
 	"os/exec"
 	"strings"
 	"time"
-
-	"github.com/b4158813/autoffmpeg/utils"
 )
 
 type ffmpegCmdMethods interface {
@@ -59,7 +57,7 @@ var _ ffmpegCmdMethods = &FFmpegCmd{}
 var _ ffmpegCmdTranscodeMethods = &FFmpegCmd{}
 
 func NewFFmpegCmd(cmd *exec.Cmd) *FFmpegCmd {
-	if !utils.ContainsFFmpeg(cmd.Path) {
+	if !ContainsFFmpeg(cmd.Path) {
 		panic("cmd path ffmpeg not include")
 	}
 	pr, pw := io.Pipe()
@@ -103,7 +101,7 @@ func (c *FFmpegCmd) checkInitAllDone() bool {
 		c.needToDo.NeedPushCR.HasAndIsDone(),
 		c.needToDo.NeedPushFS.HasAndIsDone(),
 	}
-	if utils.ReduceBoolListAllTrue(temp) {
+	if ReduceBoolListAllTrue(temp) {
 		c.isInfoAllDone = true
 		return true
 	}
@@ -244,25 +242,25 @@ func (c *FFmpegCmd) StderrGetAllInfo(line string) {
 	// 转码流程：拉源流 -> 转推转码流
 	if c.needToDo.NeedPullFSCR.HasAndNotDone() {
 		// 拉到源流后，stderr会有Video信息，且这一行一定会包含codec和分辨率信息
-		if utils.ContainsVideoInfoAll(line) {
+		if ContainsVideoInfoAll(line) {
 			c.transInfo.PullRt = time.Now().UnixMilli() - c.stTimeUnixMilli
-			c.transInfo.PullMode = utils.GetStdModeFromString(line)
-			c.transInfo.PullCodec = utils.GetStdCodecFromString(line)
+			c.transInfo.PullMode = GetStdModeFromString(line)
+			c.transInfo.PullCodec = GetStdCodecFromString(line)
 
 			c.needToDo.NeedPullFSCR.MakeDone()
 		}
 	} else if c.needToDo.NeedPushCR.HasAndNotDone() {
 		// 转码成功后，stderr会有Video信息，且这一行一定会包含codec和分辨率信息
-		if utils.ContainsVideoInfoAll(line) {
-			c.transInfo.PushMode = utils.GetStdModeFromString(line)
-			c.transInfo.PushCodec = utils.GetStdCodecFromString(line)
+		if ContainsVideoInfoAll(line) {
+			c.transInfo.PushMode = GetStdModeFromString(line)
+			c.transInfo.PushCodec = GetStdCodecFromString(line)
 
 			c.needToDo.NeedPushCR.MakeDone()
 		}
 	} else if c.needToDo.NeedPushFS.HasAndNotDone() {
 		// 转推成功后，stderr会不停地打印如下line
 		// frame=  332 fps= 35 q=36.0 size=    2048kB time=00:00:15.13 bitrate=1108.6kbits/s dup=0 drop=17 speed= 1.6x    4kB time=00:00:01.80 bitrate= 335.7kbits/s dup=0 drop=1 speed=3.48x
-		if utils.ContainsTranscodePushInfoAll(line) {
+		if ContainsTranscodePushInfoAll(line) {
 			c.transInfo.PushRt = time.Now().UnixMilli() - c.stTimeUnixMilli
 
 			c.needToDo.NeedPushFS.MakeDone()
