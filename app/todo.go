@@ -1,4 +1,4 @@
-package app
+package autoffmpeg
 
 type singleToDoI interface {
 	Has() bool

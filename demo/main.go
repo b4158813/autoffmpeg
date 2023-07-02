@@ -1,7 +1,7 @@
 package main
 
 import (
-	"autoffmpeg/app"
+	autoffmpeg "autoffmpeg/app"
 	"context"
 	"os/exec"
 )
@@ -9,5 +9,5 @@ import (
 func main() {
 	ctx := context.Background()
 	cmd := exec.CommandContext(ctx, "ffmpeg", "-i")
-	app.NewFFmpegCmdContext(ctx, cmd)
+	autoffmpeg.NewFFmpegCmdContext(ctx, cmd)
 }
