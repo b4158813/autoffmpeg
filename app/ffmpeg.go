@@ -14,6 +14,7 @@ type ffmpegCmdMethods interface {
 	checkInitAllDone() bool
 
 	IsInitAllDone() bool
+	InitAllDoneSig() <-chan struct{}
 
 	ReadFromBuff()
 	SetBuffTimeOut(time.Duration)
@@ -45,9 +46,10 @@ type FFmpegCmd struct {
 	buffReadTimeout time.Duration
 	status          sType
 
-	isInfoAllDone bool
-	transInfo     *TranscodeInfo
-	needToDo      *NeedToDo
+	isInitAllDone  bool
+	initAllDoneSig chan struct{}
+	transInfo      *TranscodeInfo
+	needToDo       *NeedToDo
 
 	stTimeUnixMilli int64
 	catchStderr     *CatchStderr
@@ -70,6 +72,8 @@ func NewFFmpegCmd(cmd *exec.Cmd) *FFmpegCmd {
 		pw:              pw,
 		buffReadTimeout: buffReadTimeOutDefault,
 		status:          statusNone,
+		isInitAllDone:   false,
+		initAllDoneSig:  make(chan struct{}),
 		transInfo:       NewTranscodeInfo(),
 		needToDo:        NewNeedToDo(true, true, true),
 		stTimeUnixMilli: 0,
@@ -93,7 +97,7 @@ func (c *FFmpegCmd) setStatus(t sType) {
 
 // TODO 不够抽象
 func (c *FFmpegCmd) checkInitAllDone() bool {
-	if c.isInfoAllDone {
+	if c.isInitAllDone {
 		return true
 	}
 	temp := []bool{
@@ -102,7 +106,10 @@ func (c *FFmpegCmd) checkInitAllDone() bool {
 		c.needToDo.NeedPushFS.HasAndIsDone(),
 	}
 	if ReduceBoolListAllTrue(temp) {
-		c.isInfoAllDone = true
+		c.isInitAllDone = true
+		go func() {
+			c.initAllDoneSig <- struct{}{}
+		}()
 		return true
 	}
 	return false
@@ -110,6 +117,10 @@ func (c *FFmpegCmd) checkInitAllDone() bool {
 
 func (c *FFmpegCmd) IsInitAllDone() bool {
 	return c.checkInitAllDone()
+}
+
+func (c *FFmpegCmd) InitAllDoneSig() <-chan struct{} {
+	return c.initAllDoneSig
 }
 
 func (c *FFmpegCmd) ReadFromBuff() {
@@ -148,26 +159,6 @@ func (c *FFmpegCmd) ReadStringWithTimeOut() string {
 	}
 }
 
-func (c *FFmpegCmd) GetPullCodec() (codec string) {
-	codec = c.transInfo.PullCodec
-	return
-}
-
-func (c *FFmpegCmd) GetPushCodec() (codec string) {
-	codec = c.transInfo.PushCodec
-	return
-}
-
-func (c *FFmpegCmd) GetPullFirstScreenMilli() (rt int64) {
-	rt = c.transInfo.PullRt
-	return
-}
-
-func (c *FFmpegCmd) GetPushFirstScreenMilli() (rt int64) {
-	rt = c.transInfo.PushRt
-	return
-}
-
 func (c *FFmpegCmd) StartRaw() error {
 	if c.status != statusNone {
 		return errors.New("FFmpegCmd status is not none")
@@ -192,6 +183,7 @@ func (c *FFmpegCmd) WaitRaw() error {
 }
 
 func (c *FFmpegCmd) Wait() error {
+	defer c.Cmd.Cancel()
 	go c.WaitWithInitInfo()
 	return c.Cmd.Wait()
 }
@@ -200,10 +192,9 @@ func (c *FFmpegCmd) WaitWithInitInfo() {
 	for {
 		select {
 		case <-c.ctx.Done():
-			c.Cmd.Cancel()
 			return
 		default:
-			if c.isInfoAllDone {
+			if c.isInitAllDone {
 				return
 			}
 			if c.Cmd.ProcessState != nil {
