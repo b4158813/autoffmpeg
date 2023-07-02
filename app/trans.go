@@ -1,6 +1,6 @@
 package autoffmpeg
 
-import "autoffmpeg/utils"
+import "github.com/b4158813/autoffmpeg/utils"
 
 type TranscodeInfo struct {
 	PullMode  string
