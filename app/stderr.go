@@ -1,5 +1,7 @@
 package autoffmpeg
 
+import "strings"
+
 const (
 	CatchStderrmaxSizeDefault = 3
 )
@@ -8,7 +10,6 @@ type CatchStderr struct {
 	has          bool
 	maxSize      int
 	stderrLineLs []string
-	stderrLine   string
 }
 
 func NewCatchStderr(has bool, maxSize int) *CatchStderr {
@@ -16,7 +17,6 @@ func NewCatchStderr(has bool, maxSize int) *CatchStderr {
 		has:          has,
 		maxSize:      maxSize,
 		stderrLineLs: make([]string, 0),
-		stderrLine:   "",
 	}
 }
 
@@ -27,6 +27,10 @@ func (c *CatchStderr) catchLine(line string) {
 	if len(c.stderrLineLs) > c.maxSize {
 		c.stderrLineLs = (c.stderrLineLs)[1:]
 	}
+}
+
+func (c *CatchStderr) stderrLog() string {
+	return strings.Join(c.stderrLineLs, "\n")
 }
 
 // 需要等待发现错误流中的信息

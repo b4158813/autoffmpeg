@@ -14,6 +14,8 @@ type ffmpegCmdMethods interface {
 	setStatus(sType)
 	checkInitAllDone() bool
 
+	IsInitAllDone() bool
+
 	ReadFromBuff()
 	SetBuffTimeOut(time.Duration)
 	ReadString() string
@@ -21,23 +23,17 @@ type ffmpegCmdMethods interface {
 	ReadStringWithTimeOut() string
 
 	StartRaw() error
-	StartWhileGetAllInfo() error
-	WaitInitAllDone() error
-}
+	Start() error
+	WaitRaw() error
+	Wait() error
+	WaitWithInitInfo()
 
-type ffmpegCmdPullMethods interface {
-	GetPullCodec() string
-}
-
-type ffmpegCmdPushMethods interface {
-	GetPushCodec() string
+	StderrGetAllInfo(string)
+	StderrLog() string
 }
 
 type ffmpegCmdTranscodeMethods interface {
-	GetPullCodec() string
-	GetPushCodec() string
-	GetPullFirstScreenMilli() int64
-	GetPushFirstScreenMilli() int64
+	GetAllTransInfo() TranscodeInfo
 }
 
 type FFmpegCmd struct {
@@ -50,18 +46,15 @@ type FFmpegCmd struct {
 	buffReadTimeout time.Duration
 	status          sType
 
-	isInfoAllDone   bool
-	allInfoDoneChan chan struct{}
-	transInfo       *TrancodeInfo
-	needToDo        *NeedToDo
+	isInfoAllDone bool
+	transInfo     *TranscodeInfo
+	needToDo      *NeedToDo
 
 	stTimeUnixMilli int64
 	catchStderr     *CatchStderr
 }
 
 var _ ffmpegCmdMethods = &FFmpegCmd{}
-var _ ffmpegCmdPullMethods = &FFmpegCmd{}
-var _ ffmpegCmdPushMethods = &FFmpegCmd{}
 var _ ffmpegCmdTranscodeMethods = &FFmpegCmd{}
 
 func NewFFmpegCmd(cmd *exec.Cmd) *FFmpegCmd {
@@ -78,7 +71,6 @@ func NewFFmpegCmd(cmd *exec.Cmd) *FFmpegCmd {
 		pw:              pw,
 		buffReadTimeout: buffReadTimeOutDefault,
 		status:          statusNone,
-		allInfoDoneChan: make(chan struct{}),
 		transInfo:       NewTranscodeInfo(),
 		needToDo:        NewNeedToDo(true, true, true),
 		stTimeUnixMilli: 0,
@@ -115,6 +107,10 @@ func (c *FFmpegCmd) checkInitAllDone() bool {
 		return true
 	}
 	return false
+}
+
+func (c *FFmpegCmd) IsInitAllDone() bool {
+	return c.checkInitAllDone()
 }
 
 func (c *FFmpegCmd) ReadFromBuff() {
@@ -184,7 +180,7 @@ func (c *FFmpegCmd) StartRaw() error {
 	return nil
 }
 
-func (c *FFmpegCmd) StartWhileGetAllInfo() error {
+func (c *FFmpegCmd) Start() error {
 	if err := c.StartRaw(); err != nil {
 		return err
 	}
@@ -192,9 +188,30 @@ func (c *FFmpegCmd) StartWhileGetAllInfo() error {
 	return nil
 }
 
-func (c *FFmpegCmd) WaitInitAllDone() error {
-	<-c.allInfoDoneChan
-	return nil
+func (c *FFmpegCmd) WaitRaw() error {
+	return c.Cmd.Wait()
+}
+
+func (c *FFmpegCmd) Wait() error {
+	go c.WaitWithInitInfo()
+	return c.Cmd.Wait()
+}
+
+func (c *FFmpegCmd) WaitWithInitInfo() {
+	for {
+		select {
+		case <-c.ctx.Done():
+			c.Cmd.Cancel()
+			return
+		default:
+			if c.isInfoAllDone {
+				return
+			}
+			if c.Cmd.ProcessState != nil {
+				return
+			}
+		}
+	}
 }
 
 // block
@@ -251,9 +268,13 @@ func (c *FFmpegCmd) StderrGetAllInfo(line string) {
 		}
 	}
 
-	if !c.isInfoAllDone && c.checkInitAllDone() {
-		go func() {
-			c.allInfoDoneChan <- struct{}{}
-		}()
-	}
+	c.checkInitAllDone()
+}
+
+func (c *FFmpegCmd) GetAllTransInfo() TranscodeInfo {
+	return *c.transInfo
+}
+
+func (c *FFmpegCmd) StderrLog() string {
+	return c.catchStderr.stderrLog()
 }

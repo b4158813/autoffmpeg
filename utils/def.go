@@ -12,7 +12,7 @@ const (
 	TranscodePushInfo = "frame= fps= q= size= bitrate= speed="
 
 	// 分辨率提取正则
-	ResolutionPattern = `\d+x\d+`
+	ResolutionPattern = `[1-9]+\d*x[1-9]+\d*`
 	// 分辨率对应转码档位
 	TotalPixel1080P = 1920 * 1080
 	TotalPixel720P  = 1280 * 720

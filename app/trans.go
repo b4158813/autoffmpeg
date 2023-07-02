@@ -2,7 +2,7 @@ package autoffmpeg
 
 import "autoffmpeg/utils"
 
-type TrancodeInfo struct {
+type TranscodeInfo struct {
 	PullMode  string
 	PushMode  string
 	PullCodec string
@@ -11,12 +11,12 @@ type TrancodeInfo struct {
 	PushRt    int64
 }
 
-func NewTranscodeInfo() *TrancodeInfo {
+func NewTranscodeInfo() *TranscodeInfo {
 	return transInfo(utils.ModeDefault, utils.ModeDefault, utils.CodecDefault, utils.CodecDefault, 0, 0)
 }
 
-func transInfo(pullMode, pushMode, pullCodec, pushCodec string, pullRt, pushRt int64) *TrancodeInfo {
-	return &TrancodeInfo{
+func transInfo(pullMode, pushMode, pullCodec, pushCodec string, pullRt, pushRt int64) *TranscodeInfo {
+	return &TranscodeInfo{
 		PullMode:  pullMode,
 		PushMode:  pushMode,
 		PullCodec: pullCodec,
