@@ -26,12 +26,9 @@ func main() {
 	fmt.Println("stderror lines:\n", autocmd.StderrLog())
 
 	go func() {
-		need := true
-		for {
-			if need && autocmd.IsInitAllDone() {
-				fmt.Printf("%+v\n", autocmd.GetAllTransInfo())
-				need = false
-			}
+		select {
+		case <-autocmd.InitAllDoneSig():
+			fmt.Printf("%+v\n", autocmd.GetAllTransInfo())
 		}
 	}()
 
