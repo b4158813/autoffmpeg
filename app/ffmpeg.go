@@ -183,7 +183,6 @@ func (c *FFmpegCmd) WaitRaw() error {
 }
 
 func (c *FFmpegCmd) Wait() error {
-	defer c.Cmd.Cancel()
 	go c.WaitWithInitInfo()
 	return c.Cmd.Wait()
 }
