@@ -3,7 +3,7 @@ package autoffmpeg
 import "strings"
 
 const (
-	CatchStderrmaxSizeDefault = 3
+	CatchStderrMaxSizeDefault = 2
 )
 
 type CatchStderr struct {

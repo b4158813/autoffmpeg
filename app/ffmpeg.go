@@ -77,7 +77,7 @@ func NewFFmpegCmd(cmd *exec.Cmd) *FFmpegCmd {
 		transInfo:       NewTranscodeInfo(),
 		needToDo:        NewNeedToDo(true, true, true),
 		stTimeUnixMilli: 0,
-		catchStderr:     NewCatchStderr(true, CatchStderrmaxSizeDefault),
+		catchStderr:     NewCatchStderr(true, CatchStderrMaxSizeDefault),
 	}
 	return ret
 }
