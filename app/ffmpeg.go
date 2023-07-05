@@ -53,12 +53,15 @@ type FFmpegCmd struct {
 
 	stTimeUnixMilli int64
 	catchStderr     *CatchStderr
+
+	streamId string
+	log      *FFmpegLog
 }
 
 var _ ffmpegCmdMethods = &FFmpegCmd{}
 var _ ffmpegCmdTranscodeMethods = &FFmpegCmd{}
 
-func NewFFmpegCmd(cmd *exec.Cmd) *FFmpegCmd {
+func NewFFmpegCmd(cmd *exec.Cmd, streamId string) *FFmpegCmd {
 	if !ContainsFFmpeg(cmd.Path) {
 		panic("cmd path ffmpeg not include")
 	}
@@ -78,15 +81,17 @@ func NewFFmpegCmd(cmd *exec.Cmd) *FFmpegCmd {
 		needToDo:        NewNeedToDo(true, true, true),
 		stTimeUnixMilli: 0,
 		catchStderr:     NewCatchStderr(true, CatchStderrMaxSizeDefault),
+		streamId:        streamId,
+		log:             NewFFmpegLog(streamId),
 	}
 	return ret
 }
 
-func NewFFmpegCmdContext(ctx context.Context, cmd *exec.Cmd) *FFmpegCmd {
+func NewFFmpegCmdContext(ctx context.Context, cmd *exec.Cmd, streamId string) *FFmpegCmd {
 	if ctx == nil {
 		panic("nil Context")
 	}
-	ffmpegCmd := NewFFmpegCmd(cmd)
+	ffmpegCmd := NewFFmpegCmd(cmd, streamId)
 	ffmpegCmd.ctx = ctx
 	return ffmpegCmd
 }
@@ -215,6 +220,9 @@ func (c *FFmpegCmd) DoAfterStart() error {
 			if len(strings.TrimSpace(this_line)) == 0 {
 				break
 			}
+
+			c.log.printf(this_line)
+
 			this_line_lower := strings.ToLower(this_line)
 
 			if c.catchStderr.has {
